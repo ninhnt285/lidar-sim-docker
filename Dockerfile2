@@ -1,0 +1,105 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ROS_DISTRO=jazzy
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+# TigerVNC display :1 corresponds to VNC port 5901
+ENV DISPLAY=:1
+ENV VNC_GEOMETRY=1920x1080
+ENV VNC_DEPTH=24
+
+# Helpful for Gazebo/RViz in Docker Desktop on macOS/Windows
+ENV QT_X11_NO_MITSHM=1
+ENV LIBGL_ALWAYS_SOFTWARE=1
+
+# ------------------------------------------------------------
+# Optional network robustness for apt.
+# This does not replace HTTPS globally.
+# ------------------------------------------------------------
+RUN printf 'Acquire::Retries "3";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' \
+    > /etc/apt/apt.conf.d/99network-fixes
+
+# ------------------------------------------------------------
+# Optional: use a faster Ubuntu mirror.
+# This only changes Ubuntu apt mirrors, not all HTTPS URLs.
+# Remove this block if the default Ubuntu mirror is fast for you.
+# ------------------------------------------------------------
+RUN sed -i \
+    -e 's|http://archive.ubuntu.com/ubuntu/|http://mirrors.kernel.org/ubuntu/|g' \
+    -e 's|http://security.ubuntu.com/ubuntu/|http://mirrors.kernel.org/ubuntu/|g' \
+    /etc/apt/sources.list.d/ubuntu.sources
+
+# ------------------------------------------------------------
+# Basic dependencies
+# ------------------------------------------------------------
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    ca-certificates \
+    lsb-release \
+    software-properties-common \
+    git \
+    build-essential \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------
+# Add ROS 2 Jazzy apt source
+# ------------------------------------------------------------
+RUN add-apt-repository -y universe && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+      -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu noble main" \
+      > /etc/apt/sources.list.d/ros2.list
+
+# ------------------------------------------------------------
+# Install ROS 2 Jazzy + Gazebo Harmonic integration
+# ------------------------------------------------------------
+RUN apt-get update && apt-get install -y \
+    ros-jazzy-desktop \
+    ros-jazzy-ros-gz \
+    python3-rosdep \
+    python3-pip \
+    python3-colcon-common-extensions \
+    python3-vcstool \
+    && rosdep init || true \
+    && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------
+# Install TigerVNC + XFCE + GUI/OpenGL support
+# ------------------------------------------------------------
+RUN apt-get update && apt-get install -y \
+    tigervnc-standalone-server \
+    tigervnc-common \
+    xfce4 \
+    xfce4-terminal \
+    dbus-x11 \
+    x11-xserver-utils \
+    mesa-utils \
+    libgl1-mesa-dri \
+    libglx-mesa0 \
+    libxcb-cursor0 \
+    libxkbcommon-x11-0 \
+    libxcb-xinerama0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------
+# Source ROS automatically in bash
+# ------------------------------------------------------------
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
+    echo "if [ -f /root/ros2_ws/install/setup.bash ]; then source /root/ros2_ws/install/setup.bash; fi" >> /root/.bashrc && \
+    echo "export DISPLAY=:1" >> /root/.bashrc
+
+WORKDIR /root/ros2_ws
+
+EXPOSE 5901
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Keep container alive for VS Code Dev Containers
+CMD ["bash", "-lc", "tail -f /dev/null"]

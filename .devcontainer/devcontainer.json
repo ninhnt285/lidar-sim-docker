@@ -1,0 +1,51 @@
+{
+  "name": "ROS 2 Jazzy + Gazebo Harmonic + VNC",
+
+  // Uncomment the "build" property if you want to build the image from a Dockerfile instead of pulling it from a registry.
+  // "build": {
+  //   "dockerfile": "../Dockerfile",
+  //   "context": ".."
+  // },
+
+  // "image": "docker.io/ninhnt/ros2-jazzy-gazebo-vnc:latest",
+    "image": "ninhnt/ros2-jazzy-gazebo-vnc:latest",
+
+
+  "workspaceMount": "source=${localWorkspaceFolder},target=/root/project,type=bind,consistency=cached",
+  "workspaceFolder": "/root/project",
+
+  "mounts": [
+    "source=${localWorkspaceFolder}/ros2_ws,target=/root/ros2_ws,type=bind,consistency=cached"
+  ],
+
+  "runArgs": [
+    "--shm-size=2g",
+    "-p",
+    "5901:5901"
+  ],
+
+  "overrideCommand": false,
+
+  "forwardPorts": [
+    5901
+  ],
+
+  "portsAttributes": {
+    "5901": {
+      "label": "VNC Viewer",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-iot.vscode-ros",
+        "ms-python.python",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "redhat.vscode-yaml"
+      ]
+    }
+  }
+}
