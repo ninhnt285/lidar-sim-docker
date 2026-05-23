@@ -7,8 +7,8 @@
   //   "context": ".."
   // },
 
-  // "image": "docker.io/ninhnt/ros2-jazzy-gazebo-vnc:latest",
-    "image": "ninhnt/ros2-jazzy-gazebo-vnc:latest",
+  "image": "docker.io/ninhnt/ros2-jazzy-gazebo-vnc:latest",
+    // "image": "ninhnt/ros2-jazzy-gazebo-vnc:latest",
 
 
   "workspaceMount": "source=${localWorkspaceFolder},target=/root/project,type=bind,consistency=cached",

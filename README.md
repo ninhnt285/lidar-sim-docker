@@ -21,14 +21,35 @@ docker build -t ros2-jazzy-gz-vnc:local -f Dockerfile .
 ### Run the container
 ```bash
 docker run --rm -it \
+	--name ros2-jazzy-gazebo-vnc \
 	--shm-size=2g \
 	-p 5901:5901 \
 	-v "$PWD/ros2_ws:/root/ros2_ws" \
 	-v "$PWD:/root/project" \
-	ros2-jazzy-gz-vnc:local
+	-w /root/project \
+	ros2-jazzy-gz-vnc:local \
+	bash
+```
+
+Or using the images from repo
+```bash
+docker run --rm -it \
+  	--name ros2-jazzy-gazebo-vnc \
+  	--shm-size=2g \
+  	-p 5901:5901 \
+  	-v "$PWD/ros2_ws:/root/ros2_ws" \
+	-v "$PWD:/root/project" \
+  	-w /root/project \
+  	docker.io/ninhnt/ros2-jazzy-gazebo-vnc:latest \
+	bash
 ```
 
 The container stays running and sources ROS automatically.
+
+If you want to open a new terminal that connect to that running container, using this command:
+```bash
+docker exec -it ros2-jazzy-gazebo-vnc bash
+```
 
 ### Start VNC (GUI)
 VNC is not started by default. Start it inside the container:
